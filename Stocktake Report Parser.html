@@ -1,0 +1,2371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-
+
+scale=1.0">
+<title>Stocktake Report Parser PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-
+
+style@1.2.0/dist/xlsx.bundle.js"></script>
+<style>
+/* ===== RESET & BASE ===== */
+* { margin: 0; padding: 0; box-sizing: border-
+
+box; }
+body { 
+    font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif; 
+    background: #f0f4f8; 
+    color: 
+
+#1a2332; 
+    min-height: 100vh;
+    padding: 24px;
+}
+
+/* ===== CONTAINER ===== */
+.container {
+    max-width: 1440px;
+    margin: 0 
+
+auto;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 20, 40, 0.08);
+    padding: 32px 40px 
+
+40px;
+    transition: all 0.2s;
+}
+
+/* ===== HEADER ===== */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: 
+
+space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid 
+
+#e9edf4;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-icon {
+    width: 44px; height: 44px;
+    
+
+background: linear-gradient(135deg, #1a3a6b, #2a5298);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    
+
+justify-content: center;
+    font-size: 22px;
+    color: #fff;
+}
+.header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-
+
+spacing: -0.3px;
+    color: #0b1e33;
+}
+.header h1 span { color: #2a5298; }
+.header-sub {
+    font-size: 13px;
+    color: #6b7a8f;
+    
+
+font-weight: 400;
+    margin-top: 2px;
+}
+.header-badge {
+    background: #eef3fc;
+    padding: 6px 16px;
+    border-radius: 20px;
+    
+
+font-size: 12px;
+    font-weight: 600;
+    color: #1a3a6b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.header-badge 
+
+.dot {
+    width: 8px; height: 8px;
+    background: #2ecc71;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* ===== DROP ZONE 
+
+===== */
+.drop-zone {
+    border: 2px dashed #d0d9e8;
+    border-radius: 16px;
+    padding: 48px 20px;
+    text-align: center;
+    
+
+cursor: pointer;
+    transition: all 0.25s ease;
+    background: #fafcff;
+    margin-bottom: 24px;
+    position: relative;
+}
+.drop-
+
+zone:hover {
+    border-color: #2a5298;
+    background: #f5f9ff;
+}
+.drop-zone.dragover {
+    border-color: #2a5298;
+    background: 
+
+#eaf1fe;
+    transform: scale(1.005);
+}
+.drop-zone .icon {
+    font-size: 44px;
+    display: block;
+    margin-bottom: 12px;
+}
+.drop-
+
+zone h3 {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1a2a44;
+}
+.drop-zone p {
+    color: #6b7f98;
+    font-size: 14px;
+    
+
+margin-top: 4px;
+}
+.drop-zone .browse-btn {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 10px 28px;
+    background: 
+
+#1a3a6b;
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background 0.2s;
+    
+
+border: none;
+    cursor: pointer;
+}
+.drop-zone .browse-btn:hover { background: #0f2a4f; }
+.drop-zone input[type="file"] { display: 
+
+none; }
+.file-info {
+    margin-top: 14px;
+    font-size: 14px;
+    color: #1a3a6b;
+    font-weight: 500;
+    display: flex;
+    
+
+align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.file-info .remove-btn {
+    background: #fee2e2;
+    color: 
+
+#b91c1c;
+    border: none;
+    padding: 2px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 
+
+600;
+}
+.file-info .remove-btn:hover { background: #fecaca; }
+
+/* ===== STATUS ===== */
+#status {
+    padding: 12px 18px;
+    border-
+
+radius: 10px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+    align-items: center;
+    
+
+gap: 10px;
+}
+#status.show { display: flex; }
+#status.success { background: #e6f7ed; color: #0b5e3a; border: 1px solid #b8e6cf; }
+#status.error { background: #feecec; color: #991b1b; border: 1px solid #fccccc; }
+#status.info { background: #e6f0fa; color: 
+
+#1a3a6b; border: 1px solid #b8d0e8; }
+#status .status-icon { font-size: 18px; }
+
+/* ===== SUMMARY ===== */
+.summary-grid {
+    
+
+display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    background: #f7faff;
+    
+
+border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    border: 1px solid #e9edf4;
+    display: none;
+}
+.summary-
+
+grid.show { display: grid; }
+.summary-item {
+    display: flex;
+    flex-direction: column;
+}
+.summary-item .label {
+    font-size: 
+
+11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #6b7f98;
+}
+.summary-item .value {
+    
+
+font-size: 18px;
+    font-weight: 700;
+    color: #0b1e33;
+    margin-top: 2px;
+}
+.summary-item .value small {
+    font-size: 12px;
+   
+
+ font-weight: 400;
+    color: #6b7f98;
+    margin-left: 4px;
+}
+
+/* ===== BUTTONS ===== */
+.action-bar {
+    display: flex;
+    flex-
+
+wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.action-bar button {
+    padding: 10px 24px;
+    
+
+border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+
+display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.action-bar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    
+
+transform: none !important;
+}
+.btn-primary {
+    background: #1a3a6b;
+    color: #fff;
+}
+.btn-primary:hover:not(:disabled) {
+    
+
+background: #0f2a4f;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(26, 58, 107, 0.3);
+}
+.btn-secondary {
+    
+
+background: #e9edf4;
+    color: #1a2a44;
+}
+.btn-secondary:hover:not(:disabled) {
+    background: #d5dde8;
+}
+.btn-success {
+    
+
+background: #0b7a4a;
+    color: #fff;
+}
+.btn-success:hover:not(:disabled) {
+    background: #095e39;
+    transform: translateY(-
+
+1px);
+    box-shadow: 0 4px 12px rgba(11, 122, 74, 0.3);
+}
+.btn-outline {
+    background: transparent;
+    color: #1a3a6b;
+    
+
+border: 1.5px solid #d0d9e8;
+}
+.btn-outline:hover:not(:disabled) {
+    background: #f5f9ff;
+    border-color: #2a5298;
+}
+.filter-
+
+select {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1.5px solid #d0d9e8;
+    background: #fff;
+    font-size: 
+
+14px;
+    font-weight: 500;
+    color: #1a2332;
+    cursor: pointer;
+    outline: none;
+    transition: border 0.2s;
+    margin-left: 
+
+auto;
+}
+.filter-select:focus { border-color: #2a5298; }
+
+/* ===== TABS ===== */
+.tabs {
+    display: flex;
+    gap: 4px;
+    border-
+
+bottom: 2px solid #e9edf4;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.tab-btn {
+    padding: 10px 20px;
+    border: none;
+    
+
+background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7f98;
+    cursor: pointer;
+    border-bottom: 3px 
+
+solid transparent;
+    transition: all 0.2s;
+    border-radius: 8px 8px 0 0;
+}
+.tab-btn:hover { color: #1a3a6b; background: 
+
+#f5f9ff; }
+.tab-btn.active {
+    color: #1a3a6b;
+    border-bottom-color: #1a3a6b;
+    background: #f5f9ff;
+}
+.tab-content { display: 
+
+none; }
+.tab-content.active { display: block; }
+
+/* ===== TABLE ===== */
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 
+
+12px;
+    border: 1px solid #e9edf4;
+    max-height: 520px;
+    overflow-y: auto;
+}
+.table-wrapper table {
+    width: 100%;
+    
+
+border-collapse: collapse;
+    font-size: 11px;
+    background: #fff;
+}
+.table-wrapper thead {
+    position: sticky;
+    top: 0;
+    
+
+z-index: 10;
+}
+.table-wrapper th {
+    background: #f7faff;
+    color: #1a2a44;
+    font-weight: 700;
+    font-size: 10px;
+    text-
+
+transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 10px 8px;
+    border-bottom: 2px solid #d0d9e8;
+    text-align: 
+
+center;
+    white-space: nowrap;
+}
+.table-wrapper td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #eef2f7;
+    text-align: 
+
+center;
+    vertical-align: middle;
+}
+.table-wrapper tr:hover td { background: #f8fbff; }
+.table-wrapper .dept-header td {
+    
+
+background: #eaf1fe !important;
+    font-weight: 700;
+    color: #1a3a6b;
+    text-align: left;
+    padding: 8px 14px;
+    font-
+
+size: 12px;
+    border-bottom: 2px solid #d0d9e8;
+}
+.table-wrapper .brand-total td {
+    background: #e6f7ed !important;
+    font-
+
+weight: 700;
+    color: #0b5e3a;
+}
+.table-wrapper .total-row td {
+    background: #f5f0eb !important;
+    font-weight: 700;
+}
+.table-
+
+wrapper .neg { color: #dc2626; font-weight: 600; }
+.table-wrapper .pos { color: #16a34a; font-weight: 600; }
+.table-wrapper 
+
+.total-label { text-align: left !important; padding-left: 16px; }
+
+/* ===== SCROLLBAR ===== */
+.table-wrapper::-webkit-scrollbar { 
+
+width: 6px; height: 6px; }
+.table-wrapper::-webkit-scrollbar-track { background: #f0f4f8; }
+.table-wrapper::-webkit-scrollbar-
+
+thumb { background: #c0cbd8; border-radius: 8px; }
+.table-wrapper::-webkit-scrollbar-thumb:hover { background: #a0b0c0; }
+
+/* 
+
+===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .container { padding: 16px; }
+    .header { flex-direction: column; 
+
+align-items: flex-start; }
+    .header h1 { font-size: 18px; }
+    .action-bar { flex-direction: column; align-items: stretch; }
+  
+
+  .filter-select { margin-left: 0; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .drop-zone { padding: 32px 
+
+16px; }
+    .drop-zone .icon { font-size: 32px; }
+}
+@media (max-width: 480px) {
+    .summary-grid { grid-template-columns: 1fr; }
+   
+
+ .tab-btn { padding: 8px 12px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- ===== HEADER ===== 
+
+-->
+    <div class="header">
+        <div class="header-left">
+            <div class="header-icon">📊</div>
+            <div>
+      
+
+          <h1>Stocktake <span>Parser</span></h1>
+                <div class="header-sub">Parkson RA4A / RA04 · Export to 
+
+Excel</div>
+            </div>
+        </div>
+        <div class="header-badge">
+            <span class="dot"></span>
+            
+
+Ready
+        </div>
+    </div>
+    
+    <!-- ===== DROP ZONE ===== -->
+    <div class="drop-zone" id="dropZone">
+        <span 
+
+class="icon">📁</span>
+        <h3>Seret & Lepas fail .txt di sini</h3>
+        <p>atau klik butang di bawah untuk pilih fail</p>
+ 
+
+       <button class="browse-btn" id="browseBtn">Pilih Fail</button>
+        <input type="file" id="fileInput" accept=".txt">
+    
+
+    <div class="file-info" id="fileInfo" style="display:none;">
+            <span id="fileName"></span>
+            <button 
+
+class="remove-btn" id="removeFileBtn">✕</button>
+        </div>
+    </div>
+    
+    <!-- ===== STATUS ===== -->
+    <div 
+
+id="status"><span class="status-icon"></span><span id="statusMsg"></span></div>
+    
+    <!-- ===== SUMMARY ===== -->
+    <div 
+
+class="summary-grid" id="summaryGrid">
+        <div class="summary-item"><span class="label">Format</span><span class="value" 
+
+id="sumFormat">-</span></div>
+        <div class="summary-item"><span class="label">Records</span><span class="value" 
+
+id="sumRecords">0</span></div>
+        <div class="summary-item"><span class="label">Brands</span><span class="value" 
+
+id="sumBrands">0</span></div>
+        <div class="summary-item"><span class="label">Departments</span><span class="value" 
+
+id="sumDepts">0</span></div>
+        <div class="summary-item"><span class="label">Totals</span><span class="value" 
+
+id="sumTotals">0</span></div>
+        <div class="summary-item"><span class="label">Store</span><span class="value" 
+
+id="sumStore">-</span></div>
+    </div>
+    
+    <!-- ===== ACTION BAR ===== -->
+    <div class="action-bar">
+        <button 
+
+class="btn-success" id="exportBtn" disabled onclick="exportExcel()">📥 Export Excel</button>
+        <button class="btn-
+
+secondary" id="previewBtn" disabled onclick="togglePreview()">👁️ Preview</button>
+        <select class="filter-select" 
+
+id="typeFilter">
+            <option value="both">Both</option>
+            <option value="outright" selected>Outright</option>
+   
+
+         <option value="csgnmnt">Csgnmnt</option>
+        </select>
+    </div>
+    
+    <!-- ===== TABS ===== -->
+    <div 
+
+class="tabs">
+        <button class="tab-btn active" data-tab="productsTab">Products</button>
+        <button class="tab-btn" 
+
+data-tab="brandTotalsTab">Brand Totals</button>
+        <button class="tab-btn" data-tab="allTotalsTab">All Totals</button>
+    
+
+</div>
+    
+    <!-- ===== TAB CONTENT ===== -->
+    <div id="productsTab" class="tab-content active">
+        <div class="table-
+
+wrapper" id="productsWrapper"><table><thead id="productsHead"></thead><tbody id="productsBody"></tbody></table></div>
+    </div>
+ 
+
+   <div id="brandTotalsTab" class="tab-content">
+        <div class="table-wrapper" id="brandWrapper"><table><thead 
+
+id="brandHead"></thead><tbody id="brandBody"></tbody></table></div>
+    </div>
+    <div id="allTotalsTab" class="tab-content">
+    
+
+    <div class="table-wrapper" id="allWrapper"><table><thead id="allHead"></thead><tbody id="allBody"></tbody></table></div>
+    
+
+</div>
+    
+</div>
+
+<script>
+// ============================================================
+// ===== ALL JAVASCRIPT FUNCTIONS =====
+// ============================================================
+
+// ===== VARIABLES =====
+let reportRows = [];
+let allTotals = [];
+let brandTotals = [];
+let deptTotals = [];
+let divisionTotals = [];
+let storeTotals = [];
+let companyTotals = [];
+let fileName = 
+
+'';
+let format = '';
+let info = {};
+let debugLog = [];
+let previewShow = false;
+
+// ===== DOM REFERENCES =====
+const dropZone = 
+
+document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const browseBtn = 
+
+document.getElementById('browseBtn');
+const fileInfo = document.getElementById('fileInfo');
+const fileNameEl = 
+
+document.getElementById('fileName');
+const removeFileBtn = document.getElementById('removeFileBtn');
+const statusEl = 
+
+document.getElementById('status');
+const statusMsg = document.getElementById('statusMsg');
+const summaryGrid = 
+
+document.getElementById('summaryGrid');
+const exportBtn = document.getElementById('exportBtn');
+const previewBtn = 
+
+document.getElementById('previewBtn');
+const typeFilter = document.getElementById('typeFilter');
+const productsBody = 
+
+document.getElementById('productsBody');
+const brandBody = document.getElementById('brandBody');
+const allBody = 
+
+document.getElementById('allBody');
+
+// ============================================================
+// ===== TAB SWITCHER =====
+// 
+
+============================================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    
+
+btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove
+
+('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(tc => 
+
+tc.classList.remove('active'));
+        document.getElementById(this.dataset.tab).classList.add('active');
+    });
+});
+
+// 
+
+============================================================
+// ===== DROP ZONE HANDLERS =====
+// 
+
+============================================================
+browseBtn.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+});
+dropZone.addEventListener('drop', 
+
+(e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+        
+
+fileInput.files = e.dataTransfer.files;
+        fileInput.dispatchEvent(new Event('change'));
+    }
+});
+
+removeFileBtn.addEventListener('click', () => {
+    fileInput.value = '';
+    fileInfo.style.display = 'none';
+    
+
+statusEl.className = '';
+    statusEl.style.display = 'none';
+    summaryGrid.classList.remove('show');
+    exportBtn.disabled = 
+
+true;
+    previewBtn.disabled = true;
+    reportRows = [];
+    allTotals = [];
+    brandTotals = [];
+    renderAll();
+});
+
+fileInput.addEventListener('change', function() {
+    if (this.files.length) {
+        const f = this.files[0];
+        
+
+fileNameEl.textContent = '📎 ' + f.name;
+        fileInfo.style.display = 'flex';
+        processFile(f);
+    }
+});
+
+// 
+
+============================================================
+// ===== UTILITY FUNCTIONS =====
+// 
+
+============================================================
+function log(msg) {
+    debugLog.push(msg);
+    console.log(msg);
+}
+
+function toNum(x) {
+    if (!x) return 0;
+    x = x.toString().trim();
+    let isNeg = false;
+    if (x.endsWith('-')) { isNeg = 
+
+true; x = x.slice(0, -1); }
+    x = x.replace(/,/g, '').trim();
+    let num = parseFloat(x) || 0;
+    return isNeg ? -num : num;
+}
+
+function showVal(n) {
+    n = Number(n || 0);
+    if (n === 0) return '-';
+    return n.toFixed(2);
+}
+
+function showStatus(msg, type) 
+
+{
+    statusEl.className = 'show ' + type;
+    statusMsg.textContent = msg;
+    statusEl.style.display = 'flex';
+}
+
+function 
+
+findSkuInLine(line) {
+    const match = line.match(/\b(\d{8})\b/);
+    if (match) return match[1];
+    return null;
+}
+
+function 
+
+extractDeptInfo(line, sku) {
+    const deptMatch = line.match(/^(\d+)\s+/);
+    if (!deptMatch) return null;
+    
+    const 
+
+deptCode = deptMatch[1];
+    const beforeSku = line.substring(0, line.indexOf(sku)).trim();
+    let deptPart = beforeSku.replace
+
+(/^\d+\s+/, '').trim();
+    
+    let parts = deptPart.split(/\s{2,}/);
+    let deptName = '', brand = '';
+    
+    if (parts.length 
+
+>= 2) {
+        deptName = parts[0].trim();
+        brand = parts.slice(1).join(' ').trim();
+    } else {
+        let singleParts = 
+
+deptPart.split(/\s+/);
+        if (singleParts.length >= 3) {
+            deptName = singleParts.slice(0, 2).join(' ');
+           
+
+ brand = singleParts.slice(2).join(' ');
+        } else if (singleParts.length === 2) {
+            deptName = singleParts[0];
+    
+
+        brand = singleParts[1];
+        } else {
+            deptName = deptPart;
+            brand = '';
+        }
+    }
+    
+    
+
+return { dept: deptCode, deptName: deptName, brand: brand };
+}
+
+// ============================================================
+// 
+
+===== EXTRACT DATA =====
+// ============================================================
+function extractData(line, isRA4A) {
+    
+
+const nums = line.match(/[\d.]+-?/g);
+    if (!nums) return null;
+    
+    const parsed = nums.map(toNum);
+    
+    if (isRA4A) {
+    
+
+    if (parsed.length >= 12) {
+            return {
+                act_qty: 0, act_cost: parsed[0] || 0, act_retail: parsed[1] 
+
+|| 0, act_mo: parsed[2] || 0,
+                ri_qty: 0, ri_cost: parsed[3] || 0, ri_retail: parsed[4] || 0, ri_mo: parsed[5] || 
+
+0,
+                adj_qty: 0, adj_cost: parsed[6] || 0, adj_retail: parsed[7] || 0, adj_mo: parsed[8] || 0,
+                
+
+var_qty: 0, var_cost: parsed[9] || 0, var_retail: parsed[10] || 0, var_mo: parsed[11] || 0
+            };
+        } else if 
+
+(parsed.length === 11) {
+            return {
+                act_qty: 0, act_cost: parsed[0] || 0, act_retail: parsed[1] || 0, 
+
+act_mo: parsed[2] || 0,
+                ri_qty: 0, ri_cost: parsed[3] || 0, ri_retail: parsed[4] || 0, ri_mo: parsed[5] || 0,
+    
+
+            adj_qty: 0, adj_cost: parsed[6] || 0, adj_retail: parsed[7] || 0, adj_mo: 0,
+                var_qty: 0, var_cost: 
+
+parsed[8] || 0, var_retail: parsed[9] || 0, var_mo: parsed[10] || 0
+            };
+        } else if (parsed.length >= 9) {
+       
+
+     return {
+                act_qty: 0, act_cost: parsed[0] || 0, act_retail: parsed[1] || 0, act_mo: parsed[2] || 0,
+          
+
+      ri_qty: 0, ri_cost: parsed[3] || 0, ri_retail: parsed[4] || 0, ri_mo: parsed[5] || 0,
+                adj_qty: 0, 
+
+adj_cost: 0, adj_retail: 0, adj_mo: 0,
+                var_qty: 0, var_cost: parsed[6] || 0, var_retail: parsed[7] || 0, var_mo: 
+
+parsed[8] || 0
+            };
+        } else if (parsed.length >= 6) {
+            return {
+                act_qty: 0, act_cost: 
+
+parsed[0] || 0, act_retail: parsed[1] || 0, act_mo: parsed[2] || 0,
+                ri_qty: 0, ri_cost: parsed[3] || 0, 
+
+ri_retail: parsed[4] || 0, ri_mo: parsed[5] || 0,
+                adj_qty: 0, adj_cost: 0, adj_retail: 0, adj_mo: 0,
+             
+
+   var_qty: 0, var_cost: 0, var_retail: 0, var_mo: 0
+            };
+        }
+    } else {
+        if (parsed.length >= 12) {
+       
+
+     return {
+                act_qty: parsed[0] || 0, act_cost: parsed[1] || 0, act_retail: parsed[2] || 0, act_mo: parsed[3] 
+
+|| 0,
+                ri_qty: parsed[4] || 0, ri_cost: parsed[5] || 0, ri_retail: parsed[6] || 0, ri_mo: parsed[7] || 0,
+         
+
+       adj_qty: 0, adj_cost: 0, adj_retail: 0, adj_mo: 0,
+                var_qty: parsed[8] || 0, var_cost: parsed[9] || 0, 
+
+var_retail: parsed[10] || 0, var_mo: parsed[11] || 0
+            };
+        } else if (parsed.length >= 9) {
+            return {
+  
+
+              act_qty: 0, act_cost: parsed[0] || 0, act_retail: parsed[1] || 0, act_mo: parsed[2] || 0,
+                ri_qty: 
+
+0, ri_cost: parsed[3] || 0, ri_retail: parsed[4] || 0, ri_mo: parsed[5] || 0,
+                adj_qty: 0, adj_cost: 0, 
+
+adj_retail: 0, adj_mo: 0,
+                var_qty: 0, var_cost: parsed[6] || 0, var_retail: parsed[7] || 0, var_mo: parsed[8] || 
+
+0
+            };
+        }
+    }
+    return null;
+}
+
+// ============================================================
+// ===== PARSE 
+
+RA4A =====
+// ============================================================
+function parseRA4A(lines) {
+    let currentProduct = 
+
+null;
+    let currentDept = '', currentDeptName = '', currentBrand = '';
+    let skipLines = ['Dept', 'Report', 'Store        :', 
+
+'----', 'PAGE', 'Code', 'Cost', 'Retail', 'MarkOn', 'Qty', '(RM)'];
+    let rowNumber = 0;
+    const isRA4A = true;
+    
+    for 
+
+(let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        let trimmed = line.trim();
+        if (!trimmed) 
+
+continue;
+        
+        let isHeader = false;
+        for (let s of skipLines) {
+            if (trimmed.includes(s)) { isHeader 
+
+= true; break; }
+        }
+        if (isHeader) continue;
+        
+        // ===== CARI TOTAL =====
+        if (trimmed.includes
+
+('TOTAL') || trimmed.includes('Total')) {
+            let totalType = '';
+            let totalName = '';
+            let rowClass 
+
+= '';
+            
+            if (trimmed.includes('Company Total')) {
+                totalType = 'Company'; totalName = 
+
+'Company Total'; rowClass = 'company-total';
+            } else if (trimmed.includes('Store Total')) {
+                totalType 
+
+= 'Store'; totalName = 'Store Total'; rowClass = 'store-total';
+            } else if (trimmed.includes('Division Total')) {
+     
+
+           totalType = 'Division'; totalName = 'Division Total'; rowClass = 'division-total';
+            } else if 
+
+(trimmed.includes('Department Total') || trimmed.includes('Departmental')) {
+                totalType = 'Department'; totalName 
+
+= 'Department Total'; rowClass = 'dept-total';
+            } else if (trimmed.includes('TOTAL')) {
+                totalType = 
+
+'Brand';
+                let brandName = trimmed.substring(0, trimmed.indexOf('TOTAL')).trim().replace(/:$/, '');
+                
+
+if (brandName.includes('-')) { brandName = brandName.split('-').pop().trim(); }
+                if (!brandName || 
+
+brandName.length < 1) { brandName = 'Unknown Brand'; }
+                totalName = brandName;
+                rowClass = 'brand-
+
+total';
+            }
+            
+            if (totalName && totalName !== 'TOTAL' && totalName.length > 0) {
+                
+
+let dataLine = '';
+                for (let j = i+1; j < Math.min(i+5, lines.length); j++) {
+                    if (lines
+
+[j].includes('Outright') || lines[j].includes('Outrgt')) {
+                        dataLine = lines[j];
+                        
+
+break;
+                    }
+                }
+                
+                if (dataLine) {
+                    const data = 
+
+extractData(dataLine, isRA4A);
+                    if (data) {
+                        const entry = {
+                            
+
+type: 'TOTAL',
+                            subType: totalType,
+                            name: totalName,
+                       
+
+     class: rowClass,
+                            dept: '',
+                            deptName: '',
+                            
+
+brand: totalName,
+                            sku: '',
+                            desc: totalName,
+                            
+
+typeLabel: totalType,
+                            aq: data.act_qty || 0,
+                            ac: data.act_cost || 0,
+      
+
+                      ar: data.act_retail || 0,
+                            am: data.act_mo || 0,
+                            rq: 
+
+data.ri_qty || 0,
+                            rc: data.ri_cost || 0,
+                            rr: data.ri_retail || 0,
+         
+
+                   rm: data.ri_mo || 0,
+                            adjq: data.adj_qty || 0,
+                            adjc: 
+
+data.adj_cost || 0,
+                            adjr: data.adj_retail || 0,
+                            adjm: data.adj_mo || 0,
+   
+
+                         vq: data.var_qty || 0,
+                            vc: data.var_cost || 0,
+                            
+
+vr: data.var_retail || 0,
+                            vm: data.var_mo || 0,
+                            isTotal: true,
+            
+
+                rowNumber: ++rowNumber
+                        };
+                        
+                        allTotals.push
+
+(entry);
+                        reportRows.push(entry);
+                        if (totalType === 'Brand') brandTotals.push
+
+(entry);
+                        else if (totalType === 'Department') deptTotals.push(entry);
+                        else if 
+
+(totalType === 'Division') divisionTotals.push(entry);
+                        else if (totalType === 'Store') storeTotals.push
+
+(entry);
+                        else if (totalType === 'Company') companyTotals.push(entry);
+                    }
+               
+
+ }
+            }
+            continue;
+        }
+        
+        // ===== SKIP DATA LINES =====
+        if (trimmed.includes
+
+('Outrgt') || trimmed.includes('Csgnmnt') || trimmed.includes('Outright')) {
+            continue;
+        }
+        
+        // 
+
+===== CARI PRODUCT =====
+        const sku = findSkuInLine(trimmed);
+        if (sku) {
+            const deptInfo = 
+
+extractDeptInfo(trimmed, sku);
+            if (deptInfo) {
+                const description = trimmed.substring(trimmed.indexOf
+
+(sku) + sku.length).trim();
+                currentDept = deptInfo.dept;
+                currentDeptName = deptInfo.deptName;
+     
+
+           currentBrand = deptInfo.brand;
+                
+                currentProduct = {
+                    type: 'PRODUCT',
+ 
+
+                   subType: 'Outright',
+                    name: '',
+                    class: '',
+                    dept: 
+
+currentDept || '',
+                    deptName: currentDeptName || '',
+                    brand: currentBrand || '',
+            
+
+        sku: sku,
+                    desc: description,
+                    typeLabel: 'Outright',
+                    aq: 0, ac: 
+
+0, ar: 0, am: 0,
+                    rq: 0, rc: 0, rr: 0, rm: 0,
+                    adjq: 0, adjc: 0, adjr: 0, adjm: 0,
+          
+
+          vq: 0, vc: 0, vr: 0, vm: 0,
+                    isTotal: false,
+                    rowNumber: ++rowNumber
+              
+
+  };
+                
+                let nextLine = i+1 < lines.length ? lines[i+1] : '';
+                if (nextLine.includes
+
+('Outrgt')) {
+                    const data = extractData(nextLine, isRA4A);
+                    if (data) {
+                     
+
+   currentProduct.ac = data.act_cost || 0;
+                        currentProduct.ar = data.act_retail || 0;
+                     
+
+   currentProduct.am = data.act_mo || 0;
+                        currentProduct.rc = data.ri_cost || 0;
+                        
+
+currentProduct.rr = data.ri_retail || 0;
+                        currentProduct.rm = data.ri_mo || 0;
+                        
+
+currentProduct.adjc = data.adj_cost || 0;
+                        currentProduct.adjr = data.adj_retail || 0;
+                    
+
+    currentProduct.adjm = data.adj_mo || 0;
+                        currentProduct.vc = data.var_cost || 0;
+                      
+
+  currentProduct.vr = data.var_retail || 0;
+                        currentProduct.vm = data.var_mo || 0;
+                    }
+   
+
+                 reportRows.push(currentProduct);
+                }
+            }
+        }
+    }
+}
+
+// 
+
+============================================================
+// ===== PARSE RA04 =====
+// 
+
+============================================================
+function parseRA04(lines) {
+    let currentProduct = null;
+    let 
+
+currentDept = '', currentDeptName = '', currentBrand = '';
+    let skipLines = ['Dept', 'Report', 'Store        :', '----', 
+
+'PAGE', 'Code', 'Cost', 'Retail', 'MarkOn', 'Qty', '(RM)'];
+    let rowNumber = 0;
+    const isRA4A = false;
+    
+    for (let i = 
+
+0; i < lines.length; i++) {
+        let line = lines[i];
+        let trimmed = line.trim();
+        if (!trimmed) continue;
+        
+        let isHeader = false;
+        for (let s of skipLines) {
+            if (trimmed.includes(s)) { isHeader = true; break; }
+ 
+
+       }
+        if (isHeader) continue;
+        
+        // ===== CARI TOTAL =====
+        if (trimmed.includes('TOTAL') || 
+
+trimmed.includes('Total')) {
+            let totalType = '';
+            let totalName = '';
+            let rowClass = '';
+        
+
+    
+            if (trimmed.includes('Company Total')) {
+                totalType = 'Company'; totalName = 'Company Total'; 
+
+rowClass = 'company-total';
+            } else if (trimmed.includes('Store Total')) {
+                totalType = 'Store'; 
+
+totalName = 'Store Total'; rowClass = 'store-total';
+            } else if (trimmed.includes('Division Total')) {
+                
+
+totalType = 'Division'; totalName = 'Division Total'; rowClass = 'division-total';
+            } else if (trimmed.includes
+
+('Department Total') || trimmed.includes('Departmental')) {
+                totalType = 'Department'; totalName = 'Department 
+
+Total'; rowClass = 'dept-total';
+            } else if (trimmed.includes('TOTAL')) {
+                totalType = 'Brand';
+         
+
+       let brandName = trimmed.substring(0, trimmed.indexOf('TOTAL')).trim().replace(/:$/, '');
+                if 
+
+(brandName.includes('-')) { brandName = brandName.split('-').pop().trim(); }
+                if (!brandName || brandName.length 
+
+< 1) { brandName = 'Unknown Brand'; }
+                totalName = brandName;
+                rowClass = 'brand-total';
+            
+
+}
+            
+            if (totalName && totalName !== 'TOTAL' && totalName.length > 0) {
+                let dataLine = '';
+    
+
+            for (let j = i+1; j < Math.min(i+5, lines.length); j++) {
+                    if (lines[j].includes('Outright') || 
+
+lines[j].includes('Outrgt')) {
+                        dataLine = lines[j];
+                        break;
+                    }
+   
+
+             }
+                
+                if (dataLine) {
+                    const data = extractData(dataLine, isRA4A);
+    
+
+                if (data) {
+                        const entry = {
+                            type: 'TOTAL',
+                    
+
+        subType: totalType,
+                            name: totalName,
+                            class: rowClass,
+             
+
+               dept: '',
+                            deptName: '',
+                            brand: totalName,
+                  
+
+          sku: '',
+                            desc: totalName,
+                            typeLabel: totalType,
+                 
+
+           aq: data.act_qty || 0,
+                            ac: data.act_cost || 0,
+                            ar: 
+
+data.act_retail || 0,
+                            am: data.act_mo || 0,
+                            rq: data.ri_qty || 0,
+         
+
+                   rc: data.ri_cost || 0,
+                            rr: data.ri_retail || 0,
+                            rm: 
+
+data.ri_mo || 0,
+                            adjq: 0, adjc: 0, adjr: 0, adjm: 0,
+                            vq: data.var_qty || 
+
+0,
+                            vc: data.var_cost || 0,
+                            vr: data.var_retail || 0,
+                      
+
+      vm: data.var_mo || 0,
+                            isTotal: true,
+                            rowNumber: ++rowNumber
+         
+
+               };
+                        
+                        allTotals.push(entry);
+                        reportRows.push
+
+(entry);
+                        if (totalType === 'Brand') brandTotals.push(entry);
+                        else if (totalType 
+
+=== 'Department') deptTotals.push(entry);
+                        else if (totalType === 'Division') divisionTotals.push(entry);
+ 
+
+                       else if (totalType === 'Store') storeTotals.push(entry);
+                        else if (totalType === 
+
+'Company') companyTotals.push(entry);
+                    }
+                }
+            }
+            continue;
+        }
+        
+  
+
+      // ===== SKIP DATA LINES =====
+        if (trimmed.includes('Outright') || trimmed.includes('Csgnmnt')) {
+            
+
+continue;
+        }
+        
+        // ===== CARI PRODUCT =====
+        const sku = findSkuInLine(trimmed);
+        if (sku) {
+      
+
+      const deptInfo = extractDeptInfo(trimmed, sku);
+            if (deptInfo) {
+                const description = 
+
+trimmed.substring(trimmed.indexOf(sku) + sku.length).trim();
+                currentDept = deptInfo.dept;
+                
+
+currentDeptName = deptInfo.deptName;
+                currentBrand = deptInfo.brand;
+                
+                
+
+currentProduct = {
+                    type: 'PRODUCT',
+                    subType: 'Outright',
+                    name: '',
+     
+
+               class: '',
+                    dept: currentDept || '',
+                    deptName: currentDeptName || '',
+       
+
+             brand: currentBrand || '',
+                    sku: sku,
+                    desc: description,
+                    
+
+typeLabel: 'Outright',
+                    aq: 0, ac: 0, ar: 0, am: 0,
+                    rq: 0, rc: 0, rr: 0, rm: 0,
+            
+
+        adjq: 0, adjc: 0, adjr: 0, adjm: 0,
+                    vq: 0, vc: 0, vr: 0, vm: 0,
+                    isTotal: false,
+   
+
+                 rowNumber: ++rowNumber
+                };
+                
+                let nextLine = i+1 < lines.length ? 
+
+lines[i+1] : '';
+                if (nextLine.includes('Outright')) {
+                    const data = extractData(nextLine, 
+
+isRA4A);
+                    if (data) {
+                        currentProduct.aq = data.act_qty || 0;
+                        
+
+currentProduct.ac = data.act_cost || 0;
+                        currentProduct.ar = data.act_retail || 0;
+                        
+
+currentProduct.am = data.act_mo || 0;
+                        currentProduct.rq = data.ri_qty || 0;
+                        
+
+currentProduct.rc = data.ri_cost || 0;
+                        currentProduct.rr = data.ri_retail || 0;
+                        
+
+currentProduct.rm = data.ri_mo || 0;
+                        currentProduct.vq = data.var_qty || 0;
+                        
+
+currentProduct.vc = data.var_cost || 0;
+                        currentProduct.vr = data.var_retail || 0;
+                        
+
+currentProduct.vm = data.var_mo || 0;
+                    }
+                    reportRows.push(currentProduct);
+                }
+ 
+
+           }
+        }
+    }
+}
+
+// ============================================================
+// ===== PROCESS FILE =====
+// 
+
+============================================================
+function processFile(file) {
+    if (!file.name.endsWith('.txt')) {
+  
+
+      showStatus('❌ Sila muat naik fail .txt', 'error');
+        return;
+    }
+    
+    debugLog = [];
+    reportRows = [];
+    
+
+allTotals = [];
+    brandTotals = [];
+    deptTotals = [];
+    divisionTotals = [];
+    storeTotals = [];
+    companyTotals = [];
+    
+    showStatus('⏳ Memproses fail...', 'info');
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        
+
+try {
+            const text = e.target.result;
+            const lines = text.split('\n');
+            
+            const 
+
+hasOutrgt = text.includes('Outrgt :');
+            const hasOutright = text.includes('Outright:');
+            
+            if 
+
+(hasOutrgt) {
+                format = 'RA4A';
+                parseRA4A(lines);
+            } else if (hasOutright) {
+             
+
+   format = 'RA04';
+                parseRA04(lines);
+            } else {
+                showStatus('❌ Tiada data ditemui. 
+
+Pastikan format laporan betul.', 'error');
+                exportBtn.disabled = true;
+                previewBtn.disabled = true;
+ 
+
+               return;
+            }
+            
+            if (reportRows.length === 0 && allTotals.length === 0) {
+             
+
+   showStatus('❌ Tiada data ditemui', 'error');
+                exportBtn.disabled = true;
+                previewBtn.disabled = 
+
+true;
+                return;
+            }
+            
+            fileName = file.name.replace('.txt', '');
+            
+
+showStatus(`✅ ${reportRows.length} rows, ${allTotals.length} totals (${format})`, 'success');
+            exportBtn.disabled = 
+
+false;
+            previewBtn.disabled = false;
+            updateSummary();
+            renderAll();
+            
+        } catch
+
+(err) {
+            showStatus('❌ Error: ' + err.message, 'error');
+            exportBtn.disabled = true;
+            
+
+previewBtn.disabled = true;
+        }
+    };
+    reader.readAsText(file);
+}
+
+// 
+
+============================================================
+// ===== UPDATE SUMMARY =====
+// 
+
+============================================================
+function updateSummary() {
+    document.getElementById
+
+('sumFormat').textContent = format || '-';
+    document.getElementById('sumRecords').textContent = reportRows.length;
+    
+
+document.getElementById('sumBrands').textContent = brandTotals.length;
+    document.getElementById('sumDepts').textContent = 
+
+deptTotals.length;
+    document.getElementById('sumTotals').textContent = allTotals.length;
+    document.getElementById
+
+('sumStore').textContent = info.store || '-';
+    summaryGrid.classList.add('show');
+}
+
+// 
+
+============================================================
+// ===== RENDER ALL =====
+// 
+
+============================================================
+function renderAll() {
+    renderProducts();
+    renderBrandTotals();
+ 
+
+   renderAllTotals();
+}
+
+function renderProducts() {
+    const filter = typeFilter.value;
+    productsBody.innerHTML = '';
+    
+    
+
+const filtered = reportRows.filter(r => {
+        if (r.isTotal) return true;
+        if (filter === 'outright') return 
+
+r.typeLabel === 'Outright' || r.typeLabel === '';
+        if (filter === 'csgnmnt') return r.typeLabel === 'Consignment';
+        
+
+return true;
+    });
+    
+    const isRA4A = format === 'RA4A';
+    
+    // Build header
+    let headerHtml = '<tr>';
+    headerHtml 
+
++= `<th>#</th><th>Dept</th><th>Dept Name</th><th>Brand</th><th>SKU</th><th>Description</th><th>Type</th>`;
+    if (isRA4A) {
+     
+
+   headerHtml += `<th>Act Cost</th><th>Act Retail</th><th>Act MO%</th>`;
+        headerHtml += `<th>RI Cost</th><th>RI 
+
+Retail</th><th>RI MO%</th>`;
+        headerHtml += `<th>Adj Cost</th><th>Adj Retail</th><th>Adj MO%</th>`;
+        headerHtml += 
+
+`<th>Var Cost</th><th>Var Retail</th><th>Var MO%</th>`;
+    } else {
+        headerHtml += `<th>Act Qty</th><th>Act 
+
+Cost</th><th>Act Retail</th><th>Act MO%</th>`;
+        headerHtml += `<th>RI Qty</th><th>RI Cost</th><th>RI Retail</th><th>RI 
+
+MO%</th>`;
+        headerHtml += `<th>Var Qty</th><th>Var Cost</th><th>Var Retail</th><th>Var MO%</th>`;
+    }
+    headerHtml += 
+
+'</tr>';
+    document.getElementById('productsHead').innerHTML = headerHtml;
+    
+    if (filtered.length === 0) {
+        
+
+productsBody.innerHTML = '<tr><td colspan="20" style="text-align:center;padding:20px;">Tiada data</td></tr>';
+        return;
+    
+
+}
+    
+    let currentDept = '';
+    filtered.forEach((row) => {
+        if (!row.isTotal && row.dept && row.dept !== currentDept) 
+
+{
+            currentDept = row.dept;
+            const tr = document.createElement('tr');
+            tr.className = 'dept-
+
+header';
+            tr.innerHTML = `<td colspan="20" style="text-align:left;padding:5px 10px;font-weight:bold;">
+                
+
+Dept ${row.dept} - ${row.deptName || ''}
+            </td>`;
+            productsBody.appendChild(tr);
+        }
+        
+        
+
+const tr = document.createElement('tr');
+        if (row.isTotal) {
+            tr.className = row.class || 'total-row';
+        }
+ 
+
+       
+        let cells = `<td>${row.rowNumber || ''}</td>`;
+        cells += `<td>${row.isTotal ? '' : (row.dept || '')}
+
+</td>`;
+        cells += `<td>${row.isTotal ? '' : (row.deptName || '')}</td>`;
+        cells += `<td>${row.isTotal ? '' : 
+
+(row.brand || '')}</td>`;
+        cells += `<td>${row.isTotal ? '' : (row.sku || '')}</td>`;
+        cells += `<td style="text-
+
+align:left;">${row.isTotal ? (row.subType + ': ' + row.name) : (row.desc || '')}</td>`;
+        cells += `<td>${row.isTotal ? 
+
+'TOTAL' : (row.typeLabel || '')}</td>`;
+        
+        if (isRA4A) {
+            cells += `<td>${showVal(row.ac)}</td><td>
+
+${showVal(row.ar)}</td><td>${showVal(row.am)}</td>`;
+            cells += `<td>${showVal(row.rc)}</td><td>${showVal(row.rr)}
+
+</td><td>${showVal(row.rm)}</td>`;
+            cells += `<td style="color:#856404;">${showVal(row.adjc)}</td><td 
+
+style="color:#856404;">${showVal(row.adjr)}</td><td>${showVal(row.adjm)}</td>`;
+            cells += `<td class="${row.vc < 0 ? 
+
+'neg' : ''}">${showVal(row.vc)}</td><td class="${row.vr < 0 ? 'neg' : ''}">${showVal(row.vr)}</td><td>${showVal(row.vm)}</td>`;
+ 
+
+       } else {
+            cells += `<td>${showVal(row.aq)}</td><td>${showVal(row.ac)}</td><td>${showVal(row.ar)}</td><td>
+
+${showVal(row.am)}</td>`;
+            cells += `<td>${showVal(row.rq)}</td><td>${showVal(row.rc)}</td><td>${showVal(row.rr)}
+
+</td><td>${showVal(row.rm)}</td>`;
+            cells += `<td class="${row.vq < 0 ? 'neg' : ''}">${showVal(row.vq)}</td><td 
+
+class="${row.vc < 0 ? 'neg' : ''}">${showVal(row.vc)}</td><td class="${row.vr < 0 ? 'neg' : ''}">${showVal(row.vr)}</td><td>
+
+${showVal(row.vm)}</td>`;
+        }
+        tr.innerHTML = cells;
+        productsBody.appendChild(tr);
+    });
+}
+
+function 
+
+renderBrandTotals() {
+    brandBody.innerHTML = '';
+    if (brandTotals.length === 0) {
+        brandBody.innerHTML = '<tr><td 
+
+colspan="10" style="text-align:center;padding:20px;">Tiada brand totals</td></tr>';
+        return;
+    }
+    
+    // Build header
+  
+
+  document.getElementById('brandHead').innerHTML = `
+        <tr><th>#</th><th>Brand</th><th>Cost</th><th>Retail</th><th>RI 
+
+Cost</th><th>RI Retail</th>
+        <th>Adj Cost</th><th>Adj Retail</th><th>Var Cost</th><th>Var Retail</th></tr>
+    `;
+    
+    
+
+brandTotals.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'brand-total';
+        
+
+tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td style="text-align:left;"><strong>${row.name}</strong></td>
+       
+
+     <td>${showVal(row.ac)}</td>
+            <td>${showVal(row.ar)}</td>
+            <td>${showVal(row.rc)}</td>
+            <td>
+
+${showVal(row.rr)}</td>
+            <td>${showVal(row.adjc)}</td>
+            <td>${showVal(row.adjr)}</td>
+            <td 
+
+class="${row.vc < 0 ? 'neg' : ''}">${showVal(row.vc)}</td>
+            <td class="${row.vr < 0 ? 'neg' : ''}">${showVal
+
+(row.vr)}</td>
+        `;
+        brandBody.appendChild(tr);
+    });
+}
+
+function renderAllTotals() {
+    allBody.innerHTML = '';
+    if 
+
+(allTotals.length === 0) {
+        allBody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:20px;">Tiada 
+
+totals</td></tr>';
+        return;
+    }
+    
+    // Build header
+    document.getElementById('allHead').innerHTML = `
+        
+
+<tr><th>#</th><th>Type</th><th>Name</th>
+        <th>Cost</th><th>Retail</th><th>RI Cost</th><th>RI Retail</th>
+        <th>Adj 
+
+Cost</th><th>Adj Retail</th><th>Var Cost</th><th>Var Retail</th></tr>
+    `;
+    
+    allTotals.forEach((row, idx) => {
+        
+
+const tr = document.createElement('tr');
+        tr.className = row.class || '';
+        tr.innerHTML = `
+            <td>${idx + 
+
+1}</td>
+            <td><strong>${row.type}</strong></td>
+            <td style="text-align:left;">${row.name}</td>
+            
+
+<td>${showVal(row.ac)}</td>
+            <td>${showVal(row.ar)}</td>
+            <td>${showVal(row.rc)}</td>
+            <td>
+
+${showVal(row.rr)}</td>
+            <td>${showVal(row.adjc)}</td>
+            <td>${showVal(row.adjr)}</td>
+            <td 
+
+class="${row.vc < 0 ? 'neg' : ''}">${showVal(row.vc)}</td>
+            <td class="${row.vr < 0 ? 'neg' : ''}">${showVal
+
+(row.vr)}</td>
+        `;
+        allBody.appendChild(tr);
+    });
+}
+
+// 
+
+============================================================
+// ===== TOGGLE PREVIEW =====
+// 
+
+============================================================
+function togglePreview() {
+    if (reportRows.length === 0) return;
+  
+
+  previewShow = !previewShow;
+    document.querySelector('.tabs').style.display = previewShow ? 'flex' : 'none';
+    
+
+document.querySelectorAll('.tab-content').forEach(el => {
+        el.style.display = previewShow ? (el.classList.contains
+
+('active') ? 'block' : 'none') : 'none';
+    });
+    previewBtn.textContent = previewShow ? '🙈 Tutup' : '👁️ Preview';
+    if 
+
+(previewShow) renderAll();
+}
+
+// ============================================================
+// ===== FORMAT ROW =====
+// 
+
+============================================================
+function formatRow(r, isRA4A, rowNum) {
+    const base = {
+        
+
+'#': rowNum || '',
+        'Dept': r.isTotal ? '' : (r.dept || ''),
+        'Dept Name': r.isTotal ? '' : (r.deptName || ''),
+     
+
+   'Brand': r.isTotal ? '' : (r.brand || ''),
+        'SKU': r.isTotal ? '' : (r.sku || ''),
+        'Description': r.isTotal ? 
+
+(r.subType + ': ' + r.name) : (r.desc || ''),
+        'Type': r.isTotal ? 'TOTAL' : (r.typeLabel || '')
+    };
+    
+    if (isRA4A) 
+
+{
+        return {
+            ...base,
+            'Act Cost': r.ac === 0 ? '-' : (r.ac||0).toFixed(2),
+            'Act Retail': 
+
+r.ar === 0 ? '-' : (r.ar||0).toFixed(2),
+            'Act MO%': r.am === 0 ? '-' : (r.am||0).toFixed(2),
+            'RI Cost': 
+
+r.rc === 0 ? '-' : (r.rc||0).toFixed(2),
+            'RI Retail': r.rr === 0 ? '-' : (r.rr||0).toFixed(2),
+            'RI MO%': 
+
+r.rm === 0 ? '-' : (r.rm||0).toFixed(2),
+            'Adj Cost': r.adjc === 0 ? '-' : (r.adjc||0).toFixed(2),
+            'Adj 
+
+Retail': r.adjr === 0 ? '-' : (r.adjr||0).toFixed(2),
+            'Adj MO%': r.adjm === 0 ? '-' : (r.adjm||0).toFixed(2),
+        
+
+    'Var Cost': r.vc === 0 ? '-' : (r.vc||0).toFixed(2),
+            'Var Retail': r.vr === 0 ? '-' : (r.vr||0).toFixed(2),
+      
+
+      'Var MO%': r.vm === 0 ? '-' : (r.vm||0).toFixed(2)
+        };
+    } else {
+        return {
+            ...base,
+            
+
+'Act Qty': r.aq === 0 ? '-' : (r.aq||0).toFixed(2),
+            'Act Cost': r.ac === 0 ? '-' : (r.ac||0).toFixed(2),
+            
+
+'Act Retail': r.ar === 0 ? '-' : (r.ar||0).toFixed(2),
+            'Act MO%': r.am === 0 ? '-' : (r.am||0).toFixed(2),
+           
+
+ 'RI Qty': r.rq === 0 ? '-' : (r.rq||0).toFixed(2),
+            'RI Cost': r.rc === 0 ? '-' : (r.rc||0).toFixed(2),
+            
+
+'RI Retail': r.rr === 0 ? '-' : (r.rr||0).toFixed(2),
+            'RI MO%': r.rm === 0 ? '-' : (r.rm||0).toFixed(2),
+            
+
+'Var Qty': r.vq === 0 ? '-' : (r.vq||0).toFixed(2),
+            'Var Cost': r.vc === 0 ? '-' : (r.vc||0).toFixed(2),
+            
+
+'Var Retail': r.vr === 0 ? '-' : (r.vr||0).toFixed(2),
+            'Var MO%': r.vm === 0 ? '-' : (r.vm||0).toFixed(2)
+        };
+  
+
+  }
+}
+
+// ============================================================
+// ===== GET HEADERS =====
+// 
+
+============================================================
+function getHeaders(isRA4A) {
+    const common = ["#","Dept","Dept 
+
+Name","Brand","SKU","Description","Type"];
+    if (isRA4A) {
+        return [
+            ...common,
+            "Act Cost","Act 
+
+Retail","Act MO%",
+            "RI Cost","RI Retail","RI MO%",
+            "Adj Cost","Adj Retail","Adj MO%",
+            "Var 
+
+Cost","Var Retail","Var MO%"
+        ];
+    } else {
+        return [
+            ...common,
+            "Act Qty","Act Cost","Act 
+
+Retail","Act MO%",
+            "RI Qty","RI Cost","RI Retail","RI MO%",
+            "Var Qty","Var Cost","Var Retail","Var MO%"
+   
+
+     ];
+    }
+}
+
+// ============================================================
+// ===== EXPORT EXCEL =====
+// 
+
+============================================================
+function exportExcel() {
+    if (reportRows.length === 0) {
+        
+
+showStatus('❌ Tiada data', 'error');
+        return;
+    }
+    
+    try {
+        const wb = XLSX.utils.book_new();
+        const 
+
+filter = typeFilter.value;
+        const isRA4A = format === 'RA4A';
+        
+        const filtered = reportRows.filter(r => {
+    
+
+        if (r.isTotal) return true;
+            if (filter === 'outright') return r.typeLabel === 'Outright' || r.typeLabel === 
+
+'';
+            if (filter === 'csgnmnt') return r.typeLabel === 'Consignment';
+            return true;
+        });
+        
+       
+
+ // 1. ALL DATA
+        let rowNum = 0;
+        const allRows = filtered.map(r => { rowNum++; return formatRow(r, isRA4A, 
+
+rowNum); });
+        const wsAll = XLSX.utils.json_to_sheet(allRows, { header: getHeaders(isRA4A) });
+        
+
+XLSX.utils.book_append_sheet(wb, wsAll, "ALL DATA");
+        
+        // 2. VARIANCE ONLY
+        const varFiltered = 
+
+filtered.filter(r => {
+            if (r.isTotal) return r.vc !== 0 || r.vr !== 0 || r.vq !== 0;
+            return r.vq !== 0 || 
+
+r.vc !== 0 || r.vr !== 0;
+        });
+        const varRows = varFiltered.map((r, idx) => formatRow(r, isRA4A, idx + 1));
+        
+
+if (varRows.length > 0) {
+            const wsVar = XLSX.utils.json_to_sheet(varRows, { header: getHeaders(isRA4A) });
+           
+
+ XLSX.utils.book_append_sheet(wb, wsVar, "VARIANCE ONLY");
+        }
+        
+        // 3. DEPT TOTAL ONLY
+        const 
+
+deptTotalFiltered = filtered.filter(r => r.isTotal === true && r.subType === 'Department');
+        const deptTotalRows = 
+
+deptTotalFiltered.map((r, idx) => formatRow(r, isRA4A, idx + 1));
+        if (deptTotalRows.length > 0) {
+            const 
+
+wsDeptTotal = XLSX.utils.json_to_sheet(deptTotalRows, { header: getHeaders(isRA4A) });
+            XLSX.utils.book_append_sheet
+
+(wb, wsDeptTotal, "DEPT TOTAL ONLY");
+        }
+        
+        // 4. SPLIT BY DEPT
+        const deptMap = {};
+        
+
+filtered.forEach(r => {
+            if (!r.isTotal) {
+                const key = (r.dept || 'NO') + ' - ' + (r.deptName || 
+
+'DEPT');
+                if (!deptMap[key]) deptMap[key] = [];
+                deptMap[key].push(r);
+            }
+        });
+      
+
+  
+        function calculateBrandTotal(deptRows, brand) {
+            const brandRows = deptRows.filter(r => r.brand === brand);
+ 
+
+           let total = { ac:0, ar:0, am:0, rc:0, rr:0, rm:0, adjc:0, adjr:0, adjm:0, vc:0, vr:0, vm:0, aq:0, rq:0, vq:0 };
+      
+
+      brandRows.forEach(r => {
+                if (isRA4A) {
+                    total.ac += r.ac||0; total.ar += r.ar||0; 
+
+total.am += r.am||0;
+                    total.rc += r.rc||0; total.rr += r.rr||0; total.rm += r.rm||0;
+                    
+
+total.adjc += r.adjc||0; total.adjr += r.adjr||0; total.adjm += r.adjm||0;
+                    total.vc += r.vc||0; total.vr += 
+
+r.vr||0; total.vm += r.vm||0;
+                } else {
+                    total.aq += r.aq||0; total.ac += r.ac||0; total.ar += 
+
+r.ar||0; total.am += r.am||0;
+                    total.rq += r.rq||0; total.rc += r.rc||0; total.rr += r.rr||0; total.rm += 
+
+r.rm||0;
+                    total.vq += r.vq||0; total.vc += r.vc||0; total.vr += r.vr||0; total.vm += r.vm||0;
+                
+
+}
+            });
+            return total;
+        }
+        
+        Object.keys(deptMap).forEach(deptKey => {
+            const 
+
+deptRows = deptMap[deptKey];
+            const rows = [];
+            let rowCounter = 0;
+            const deptCode = deptRows
+
+[0]?.dept || '';
+            const deptName = deptRows[0]?.deptName || '';
+            
+            const brands = [...new Set
+
+(deptRows.map(r => r.brand).filter(b => b))];
+            
+            brands.forEach(brand => {
+                const 
+
+brandProducts = deptRows.filter(r => r.brand === brand);
+                brandProducts.forEach(r => {
+                    
+
+rowCounter++;
+                    rows.push(formatRow(r, isRA4A, rowCounter));
+                });
+                
+                
+
+let brandTotal = filtered.find(r => r.isTotal && r.subType === 'Brand' && r.name === brand);
+                if (!brandTotal) {
+  
+
+                  const calculated = calculateBrandTotal(deptRows, brand);
+                    brandTotal = {
+                    
+
+    isTotal: true, subType: 'Brand', name: brand,
+                        ac: calculated.ac, ar: calculated.ar, am: 
+
+calculated.am,
+                        rc: calculated.rc, rr: calculated.rr, rm: calculated.rm,
+                        adjc: 
+
+calculated.adjc, adjr: calculated.adjr, adjm: calculated.adjm,
+                        vc: calculated.vc, vr: calculated.vr, vm: 
+
+calculated.vm,
+                        aq: calculated.aq, rq: calculated.rq, vq: calculated.vq,
+                        dept: 
+
+deptCode, deptName: deptName, brand: brand
+                    };
+                }
+                rows.push({});
+                
+
+rowCounter++;
+                rows.push(formatRow(brandTotal, isRA4A, rowCounter));
+            });
+            
+            // 
+
+Department Total
+            const deptTotal = filtered.find(r => r.isTotal && r.subType === 'Department' && (r.name.includes
+
+(deptCode) || r.name.includes(deptName)));
+            if (deptTotal) {
+                rows.push({});
+                rowCounter
+
+++;
+                rows.push(formatRow(deptTotal, isRA4A, rowCounter));
+            } else {
+                let deptCalc = { 
+
+ac:0, ar:0, rc:0, rr:0, adjc:0, adjr:0, vc:0, vr:0, aq:0, rq:0, vq:0 };
+                deptRows.forEach(r => {
+                  
+
+  if (isRA4A) {
+                        deptCalc.ac += r.ac||0; deptCalc.ar += r.ar||0;
+                        deptCalc.rc += 
+
+r.rc||0; deptCalc.rr += r.rr||0;
+                        deptCalc.adjc += r.adjc||0; deptCalc.adjr += r.adjr||0;
+                 
+
+       deptCalc.vc += r.vc||0; deptCalc.vr += r.vr||0;
+                    } else {
+                        deptCalc.aq += 
+
+r.aq||0; deptCalc.ac += r.ac||0; deptCalc.ar += r.ar||0;
+                        deptCalc.rq += r.rq||0; deptCalc.rc += r.rc||0; 
+
+deptCalc.rr += r.rr||0;
+                        deptCalc.vq += r.vq||0; deptCalc.vc += r.vc||0; deptCalc.vr += r.vr||0;
+          
+
+          }
+                });
+                const fakeDeptTotal = {
+                    isTotal: true, subType: 'Department', 
+
+name: 'Department Total',
+                    ...deptCalc, dept: deptCode, deptName: deptName, brand: ''
+                };
+       
+
+         rows.push({});
+                rowCounter++;
+                rows.push(formatRow(fakeDeptTotal, isRA4A, rowCounter));
+    
+
+        }
+            
+            // Division, Store, Company Total
+            ['Division','Store','Company'].forEach(type => {
+  
+
+              const total = filtered.find(r => r.isTotal && r.subType === type);
+                if (total) {
+                    
+
+rows.push({});
+                    rowCounter++;
+                    rows.push(formatRow(total, isRA4A, rowCounter));
+             
+
+   }
+            });
+            
+            const ws = XLSX.utils.json_to_sheet(rows, { header: getHeaders(isRA4A) });
+           
+
+ let sheetName = deptKey.substring(0, 31);
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        });
+        
+       
+
+ // 5. EXPORT
+        const today = new Date().toISOString().slice(0,10);
+        const exportName = `${fileName || 'stocktake'}
+
+_${today}.xlsx`;
+        XLSX.writeFile(wb, exportName);
+        showStatus(`✅ Export berjaya: ${exportName}`, 'success');
+       
+
+ 
+    } catch(err) {
+        showStatus('❌ Export error: ' + err.message, 'error');
+    }
+}
+
+// 
+
+============================================================
+// ===== FILTER CHANGE =====
+// 
+
+============================================================
+typeFilter.addEventListener('change', renderAll);
+
+// 
+
+============================================================
+// ===== INITIAL STATE =====
+// 
+
+============================================================
+statusEl.style.display = 'none';
+summaryGrid.classList.remove
+
+('show');
+exportBtn.disabled = true;
+previewBtn.disabled = true;
+document.querySelector('.tabs').style.display = 'none';
+document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+
+console.log('📊 Stocktake Parser PRO loaded. 
+
+Ready to process files.');
+</script>
+</body>
+</html>
